@@ -1,0 +1,86 @@
+/* iSponsorBlock 설정 */
+"Enabled" = "활성화";
+"RestartFooter" = "변경사항을 적용하려면 YouTube를 다시 시작하세요.";
+
+"Sponsor" = "스폰서";
+"Intermission/IntroAnimation" = "중간 휴식/인트로 애니메이션";
+"Intermission" = "중간 휴식";
+"Endcards/Credits" = "엔드카드/크레딧";
+"Outro" = "아웃트로";
+"InteractionReminder" = "상호작용 알림(구독)";
+"InteractionReminder_Subcribe/Like" = "상호작용 알림(구독/좋아요)";
+"Interaction" = "상호작용";
+"Unpaid/SelfPromotion" = "무료/자체 광고";
+"SelfPromo" = "자체 광고";
+"Non-MusicSection" = "음악: 비음악 색션";
+"Non-Music" = "비음악";
+"SponsorBlockUserID" = "SponsorBlock 사용자 ID";
+"SponsorBlockAPIInstance" = "SponsorBlock API 인스턴스";
+
+"Disable" = "비활성화";
+"AutoSkip" = "자동 건너뛰기";
+"ShowInSeekBar" = "탐색 바에 표시";
+"ManualSkip" = "수동 건너뛰기";
+"SetColorToShowInSeekBar" = "탐색 바에 표시할 색상 설정";
+
+"UserID" = "사용자 ID:";
+"UserIDFooter" = "사용자 설정 SponsorBlock 사용자 ID를 사용하려면 여기에 입력할 수 있습니다. 이것이 무엇인지 모르는 경우 기본값으로 두세요.";
+"API_URL" = "API URL:";
+"APIFooter" = "사용자 설정 SponsorBlock API 인스턴스를 사용하려면 여기에 입력할 수 있습니다. 이것이 무엇인지 모르는 경우 기본값으로 두세요. 예: https://sponsor.ajay.app/api";
+"MinimumSegmentDuration" = "건너뛰기 최소 세그먼트 기간(초):";
+"HowLongNoticeWillAppear" = "건너뛰기 알림 표시 기간(초):";
+"ShowSkipNotice" = "건너뛰기 알림 표시";
+"ShowButtonsInPlayer" = "동영상 플레이어에 iSponsorBlock 버튼 표시";
+"HideStartEndButtonInPlayer" = "동영상 플레이어에서 시작/종료 버튼 숨기기";
+"ShowModifiedTime" = "탐색 바에 수정된 시간 표시";
+"AudioNotificationOnSkip" = "건너뛰기 시 오디오 알림";
+"AudioFooter" = "무음 모드에서는 사용할 수 없습니다.";
+"EnableSkipCountTracking" = "건너뛰기 횟수 추적 활성화";
+"DonateOnVenmo" = "Venmo로 기부하기";
+"DonateOnPayPal" = "PayPal로 기부하기";
+
+/* 세그먼트 항목 */
+"SegmentStartsNow" = "세그먼트 지금 시작";
+"SegmentEndsNow" = "세그먼트 지금 종료";
+"WhitelistChannel" = "채널 허용 목록";
+"SegmentsInDatabase" = "데이터베이스에 세그먼트가 이미 있습니다.";
+"YourSegments" = "세그먼트:";
+"SubmitSegments" = "세그먼트 제출";
+"SuccessfullySubmittedSegments" = "세그먼트를 성공적으로 제출했습니다.";
+"EndTimeLessThanStartTime" = "설정한 종료 시간이 시작 시간보다 짧습니다. 그 이후의 시간을 선택하세요.";
+"UnfinishedSegments" = "끝나지 않은 세그먼트가 있습니다\n 세그먼트에 카테고리 및/또는 종료 시간을 추가하세요.";
+"EditStartTime" = "시작 시간 편집";
+"EditStartTime_Desc" = "시작 시간 편집: (예: 1:15 입력)";
+"EditEndTime" = "종료 시간 편집";
+"EditEndTime_Desc" = "종료 시간 편집: (예: 1:15 입력)";
+"From" = "부터";
+"to" = "까지";
+"EditCategory" = "카테고리 편집";
+"EditSegment" = "세그먼트 편집";
+"Edit" = "편집";
+"Error" = "오류";
+"ErrorCode" = "오류 코드";
+"Success" = "성공";
+"OK" = "확인";
+"Cancel" = "취소";
+"Delete" = "삭제";
+"Upvote" = "추천";
+"Downvote" = "비추천";
+"VoteToChangeCategory" = "카테고리 변경 투표";
+"VoteOnSegment" = "세그먼트에 투표";
+"SuccessfullyVoted" = "성공적으로 투표했습니다.";
+"ErrorVoting" = "투표 오류";
+
+/* 팝업*/
+"ManuallySkipReminder" = "%@ 세그먼트\n에서 %ld:%02ld까지 수동으로 건너뛰시겠습니까?";
+"Skip" = "건너뛰기";
+"SkippedSegment" = "%@ 세그먼트를 건너뛰었습니다.";
+"Unskip" = "건너뛰기 해제";
+
+/* 팝업의 세그먼트*/
+"sponsor" = "스폰서";
+"intro" = "인트로";
+"outro" = "아웃트로";
+"interaction" = "상호작용";
+"selfpromo" = "자체 광고";
+"music_offtopic" = "비음악";
