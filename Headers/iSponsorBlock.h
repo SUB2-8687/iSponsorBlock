@@ -4,6 +4,8 @@
 #import "YouTubeHeader/QTMIcon.h"
 #import "YouTubeHeader/YTAppDelegate.h"
 #import "YouTubeHeader/YTAppViewControllerImpl.h"
+#import "YouTubeHeader/YTColor.h"
+#import "YouTubeHeader/YTHeaderViewController.h"
 #import "YouTubeHeader/YTIChapterRenderer.h"
 #import "YouTubeHeader/YTIModularPlayerBarModel.h"
 #import "YouTubeHeader/YTInlinePlayerBarContainerView.h"
@@ -23,6 +25,7 @@
 #import "YouTubeHeader/YTRightNavigationButtons.h"
 #import "YouTubeHeader/YTSegmentableInlinePlayerBarView.h"
 #import "YouTubeHeader/YTSingleVideoTime.h"
+#import "YouTubeHeader/YTUIResources.h"
 #import "YouTubeHeader/YTWatchLayerViewController.h"
 #import "MBProgressHUD.h"
 #import "SponsorSegment.h"
@@ -86,9 +89,13 @@ extern NSMutableArray <NSString *> *kWhitelistedChannels;
 @property (nonatomic, assign) BOOL isSponsorMarker;
 @end
 
-@interface YTRightNavigationButtons (iSB)
+@interface YTHeaderViewController (iSB)
 @property (strong, nonatomic) YTQTMButton *sponsorBlockButton;
 @end
+
+// @interface YTRightNavigationButtons (iSB)
+// @property (strong, nonatomic) YTQTMButton *sponsorBlockButton;
+// @end
 
 @interface YTInlinePlayerBarView (iSB)
 @property (strong, nonatomic) NSMutableArray *sponsorMarkerViews;

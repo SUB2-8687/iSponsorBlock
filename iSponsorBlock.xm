@@ -567,7 +567,8 @@ static void setSkipSegments(YTModularPlayerBarView *self, NSMutableArray <Sponso
         referenceView = [[self valueForKey:@"_segmentViews"] firstObject];
     } @catch (id ex) {
         for (UIView *subview in self.subviews) {
-            if ([subview isKindOfClass:NSClassFromString(@"YTPlayerBarRectangleDecorationView")]) {
+            if ([subview isKindOfClass:NSClassFromString(@"YTPlayerBarRectangleDecorationView")]
+                || [subview isKindOfClass:NSClassFromString(@"YTPlayerBarProgressDecorationView")]) {
                 referenceView = subview;
                 break;
             }
@@ -603,7 +604,7 @@ static void setSkipSegments(YTModularPlayerBarView *self, NSMutableArray <Sponso
             return;
         }
 
-        UIView *newMarkerView = [[UIView alloc] initWithFrame:CGRectMake(beginX, originY, markerWidth, 2)];
+        UIView *newMarkerView = [[UIView alloc] initWithFrame:CGRectMake(beginX, originY, markerWidth, referenceView.frame.size.height)];
         newMarkerView.userInteractionEnabled = NO;
         newMarkerView.backgroundColor = color;
         [self insertSubview:newMarkerView belowSubview:scrubber];
@@ -1003,54 +1004,60 @@ AVQueuePlayer *queuePlayer;
 %end
 
 %group JustSettings
-%hook YTRightNavigationButtons
+%hook YTHeaderViewController
 %property (retain, nonatomic) YTQTMButton *sponsorBlockButton;
-- (NSMutableArray *)buttons {
-    NSMutableArray *retVal = %orig.mutableCopy;
-    [self.sponsorBlockButton removeFromSuperview];
-    [self addSubview:self.sponsorBlockButton];
-    NSInteger pageStyle;
-    Class YTPageStyleControllerClass = %c(YTPageStyleController);
-    if (YTPageStyleControllerClass)
-        pageStyle = [YTPageStyleControllerClass pageStyle];
-    else {
-        YTAppDelegate *delegate = (YTAppDelegate *)[UIApplication sharedApplication].delegate;
-        YTAppViewControllerImpl *appViewController = [delegate valueForKey:@"_appViewController"];
-        pageStyle = [appViewController pageStyle];
-    }
-    UIImage *image;
-    if (!self.sponsorBlockButton) {
-        self.sponsorBlockButton = [%c(YTQTMButton) iconButton];
-
-        [self.sponsorBlockButton enableNewTouchFeedback];
-        self.sponsorBlockButton.frame = CGRectMake(0, 0, 40, 40);
-
-        image = [UIImage imageWithContentsOfFile:[tweakBundle pathForResource:@"sponsorblocksettings-20@2x" ofType:@"png"]];
-        [self.sponsorBlockButton addTarget:self action:@selector(sponsorBlockButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
-        [retVal insertObject:self.sponsorBlockButton atIndex:0];
-    } else {
-        image = [%c(QTMIcon) tintImage:self.sponsorBlockButton.currentImage color:pageStyle ? UIColor.whiteColor : UIColor.blackColor];
-    }
-    [self.sponsorBlockButton setImage:image forState:UIControlStateNormal];
-    return retVal;
+- (id)initWithParentResponder:(id)arg {
+    self = %orig;
+    UIImage *image = [UIImage imageWithContentsOfFile:[tweakBundle pathForResource:@"sponsorblocksettings-20@2x" ofType:@"png"]];
+    self.sponsorBlockButton = [%c(YTQTMButton) barButtonWithImage:[%c(YTUIResources) tintImage:image color:[%c(YTColor) white1]] accessibilityLabel:@"Sponsor Block" accessibilityIdentifier:@"sponsorBlockButton"];
+    [self.sponsorBlockButton addTarget:self action:@selector(sponsorBlockButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+    YTRightNavigationButtons *rightButtons = [self valueForKey:@"_rightNavigationButtons"];
+    [rightButtons setButton:self.sponsorBlockButton forType:'ispb'];
+    return self;
 }
-- (NSMutableArray *)visibleButtons {
-    NSMutableArray *retVal = %orig.mutableCopy;
-    
-    //fixes button overlapping yt logo on smaller devices
-    [self setLeadingPadding:-10];
-    if (self.sponsorBlockButton) {
-        [self.sponsorBlockButton removeFromSuperview];
-        [self addSubview:self.sponsorBlockButton];
-        [retVal insertObject:self.sponsorBlockButton atIndex:0];
-    }
-    return retVal;
+- (void)setRightButtons {
+    %orig;
+    YTRightNavigationButtons *rightButtons = [self valueForKey:@"_rightNavigationButtons"];
+    [rightButtons setButton:[self isTopLevelPage] ? self.sponsorBlockButton : nil forType:'ispb'];
 }
 %new(v@:@)
 - (void)sponsorBlockButtonPressed:(UIButton *)sender {
     SponsorBlockSettingsController *settingsController = [[SponsorBlockSettingsController alloc] init];
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:settingsController];
     [[[UIApplication sharedApplication] delegate].window.rootViewController presentViewController:navigationController animated:YES completion:nil];
+}
+%end
+
+static NSArray *filterButtons(YTRightNavigationButtons *self, BOOL visibleOnly) {
+    NSMutableArray *buttons = [NSMutableArray array];
+    NSMapTable <NSNumber *, YTQTMButton *> *buttonsTable = [self valueForKey:@"_buttons"];
+    for (NSNumber *key in buttonsTable) {
+        YTQTMButton *button = [buttonsTable objectForKey:key];
+        if (!visibleOnly || !button.hidden) {
+            if (key.intValue == 'ispb') {
+                if ([self valueForKey:@"_buttons"][key])
+                    [buttons insertObject:button atIndex:0];
+            } else
+                [buttons addObject:button];
+        }
+    }
+    NSArray *dynamicButtons = [self valueForKey:@"_dynamicButtons"];
+    for (YTQTMButton *button in dynamicButtons) {
+        if (!visibleOnly || !button.hidden)
+            [buttons addObject:button];
+    }
+    YTQTMButton *button7 = [buttonsTable objectForKey:@7];
+    if (button7 && (!visibleOnly || !button7.hidden))
+        [buttons addObject:button7];
+    return buttons;
+}
+
+%hook YTRightNavigationButtons
+- (NSArray *)buttons {
+    return filterButtons(self, NO);
+}
+- (NSArray *)visibleButtons {
+    return filterButtons(self, YES);
 }
 %end
 %end
