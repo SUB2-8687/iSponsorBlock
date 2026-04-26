@@ -5,7 +5,7 @@
 "Sponsor" = "스폰서";
 "Intermission/IntroAnimation" = "중간 휴식/인트로 애니메이션";
 "Intermission" = "중간 휴식";
-"Endcards/Credits" = "엔드카드/크레딧";
+"Endcards/Credits" = "엔딩 카드/크레딧";
 "Outro" = "아웃트로";
 "InteractionReminder" = "상호작용 알림(구독)";
 "InteractionReminder_Subcribe/Like" = "상호작용 알림(구독/좋아요)";
@@ -84,3 +84,4 @@
 "interaction" = "상호작용";
 "selfpromo" = "자체 광고";
 "music_offtopic" = "비음악";
+"preview" = "미리보기";
