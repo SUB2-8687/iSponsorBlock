@@ -74,6 +74,7 @@
 
 /* Pop-ups*/
 "ManuallySkipReminder" = "Перемотать %@ с %ld:%02ld до %ld:%02ld?";
+"ManuallySkipReminderPoi" = "Перейти к %@ в %ld:%02ld?";
 "Skip" = "Да";
 "SkippedSegment" = "Перемотан\n%@";
 "Unskip" = "Отмена";
@@ -86,3 +87,10 @@
 "selfpromo" = "сегмент с\nсаморекламой";
 "music_offtopic" = "сегмент\nбез музыки";
 "preview" = "preview";
+"hook" = "зацепка/приветствие";
+"filler" = "отступление/шутка";
+"poi_highlight" = "лучший момент";
+
+"Hook/Greetings" = "Зацепка/Приветствие";
+"Tangents/Jokes" = "Отступления/Шутки";
+"Highlight" = "Лучший момент";

@@ -74,6 +74,7 @@
 
 /* Pop-up */
 "ManuallySkipReminder" = "Lewati %@ segmen\n dari %ld:%02ld ke %ld:%02ld?";
+"ManuallySkipReminderPoi" = "Loncat ke %@ pada %ld:%02ld?";
 "Skip" = "Lewati";
 "SkippedSegment" = "Segmen %@ dilewati";
 "Unskip" = "Batalkan lewati";
@@ -86,3 +87,10 @@
 "selfpromo" = "promosi diri sendiri";
 "music_offtopic" = "non-musik";
 "preview" = "preview";
+"hook" = "pengait/salam";
+"filler" = "tangensial/lelucon";
+"poi_highlight" = "sorotan";
+
+"Hook/Greetings" = "Pengait/Salam";
+"Tangents/Jokes" = "Tangensial/Lelucon";
+"Highlight" = "Sorotan";

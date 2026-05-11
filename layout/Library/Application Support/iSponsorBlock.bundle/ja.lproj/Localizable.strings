@@ -74,6 +74,7 @@
 
 /* Pop-ups*/
 "ManuallySkipReminder" = "%@セグメントを手動でスキップします。\n%ld:%02ldから%ld:%02ldまで?";
+"ManuallySkipReminderPoi" = "%@に%ld:%02ldでジャンプしますか?";
 "Skip" = "スキップ";
 "SkippedSegment" = "%@セグメントをスキップしました";
 "Unskip" = "スキップを解除";
@@ -86,3 +87,10 @@
 "selfpromo" = "自己宣伝";
 "music_offtopic" = "音楽以外";
 "preview" = "preview";
+"hook" = "フック/挨拶";
+"filler" = "余談/ジョーク";
+"poi_highlight" = "ハイライト";
+
+"Hook/Greetings" = "フック/挨拶";
+"Tangents/Jokes" = "余談/ジョーク";
+"Highlight" = "ハイライト";

@@ -74,6 +74,7 @@
 
 /* Pop-ups*/
 "ManuallySkipReminder" = "手動跳過 %@ 片段\n從 %ld:%02ld 到 %ld:%02ld?";
+"ManuallySkipReminderPoi" = "跳到 %@ 於 %ld:%02ld?";
 "Skip" = "跳過";
 "SkippedSegment" = "已跳過 %@ 片段";
 "Unskip" = "取消跳過";
@@ -86,3 +87,10 @@
 "selfpromo" = "自薦";
 "music_offtopic" = "非音樂";
 "preview" = "preview";
+"hook" = "吸引片段/問候";
+"filler" = "離題/玩笑";
+"poi_highlight" = "精彩片段";
+
+"Hook/Greetings" = "吸引片段/問候";
+"Tangents/Jokes" = "離題/玩笑";
+"Highlight" = "精彩片段";

@@ -52,6 +52,9 @@ NSDictionary *categoryLocalization = @{
     @"selfpromo": LOC(@"selfpromo"),
     @"music_offtopic": LOC(@"music_offtopic"),
     @"preview": LOC(@"preview"),
+    @"hook": LOC(@"hook"),
+    @"filler": LOC(@"filler"),
+    @"poi_highlight": LOC(@"poi_highlight"),
 };
 
 %group Main
@@ -91,81 +94,94 @@ void currentVideoTimeDidChange(YTPlayerViewController *self, YTSingleVideoTime *
         if (self.currentSponsorSegment <= self.skipSegments.count-1) {
             sponsorSegment = self.skipSegments[self.currentSponsorSegment];
         } else if (self.unskippedSegment != self.currentSponsorSegment-1) {
-            sponsorSegment = self.skipSegments[self.currentSponsorSegment-1];
+            SponsorSegment *fallback = self.skipSegments[self.currentSponsorSegment-1];
+            // poi_highlight has no range to "unskip" — never use it as a fallback segment
+            if (![fallback.category isEqualToString:@"poi_highlight"]) {
+                sponsorSegment = fallback;
+            }
         }
         
         if ((lroundf(arg2.time) == ceil(sponsorSegment.startTime) && arg2.time >= sponsorSegment.startTime) || (lroundf(arg2.time) >= ceil(sponsorSegment.startTime) && arg2.time < sponsorSegment.endTime)) {
 
-            if ([[kCategorySettings objectForKey:sponsorSegment.category] intValue] == 3) {
-                if (self.hud.superview != self.view && self.hudDisplayed == NO) {
-                    self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
-                    self.hudDisplayed = YES; // Set yes to make sure that HUD is not persistent (Issue #62)
-                    self.hud.mode = MBProgressHUDModeCustomView;
-                    NSString *localizedSegment = categoryLocalization[sponsorSegment.category] ?: sponsorSegment.category;
-                    NSString *localizedManualSkip = LOC(@"ManuallySkipReminder");
-                    NSString *formattedManualSkip = [NSString stringWithFormat:localizedManualSkip, localizedSegment, lroundf(sponsorSegment.startTime)/60, lroundf(sponsorSegment.startTime)%60, lroundf(sponsorSegment.endTime)/60, lroundf(sponsorSegment.endTime)%60];
-                    self.hud.label.text = formattedManualSkip;
-                    self.hud.label.numberOfLines = 0;
-                    [self.hud.button setTitle:LOC(@"Skip") forState:UIControlStateNormal];
-                    [self.hud.button addTarget:self action:@selector(manuallySkipSegment:) forControlEvents:UIControlEventTouchUpInside];
-                    // Add custom button to hide HUD
-                    UIButton *cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
-                    UIImage *cancelImage = [[UIImage systemImageNamed:@"x.circle"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-                    [cancelButton setImage:cancelImage forState:UIControlStateNormal];
-                    [cancelButton setTintColor:[[UIColor blackColor] colorWithAlphaComponent:0.7]];
-                    [cancelButton addTarget:self action:@selector(cancelHUD:) forControlEvents:UIControlEventTouchUpInside];
+            // poi_highlight is handled entirely at load time in setSkipSegments: (web-style).
+            // In the per-tick loop it is a no-op — just advance the counter so other segments
+            // behind it are not blocked.
+            if (![sponsorSegment.category isEqualToString:@"poi_highlight"]) {
+                if ([[kCategorySettings objectForKey:sponsorSegment.category] intValue] == 3) {
+                    if (self.hud.superview != self.view && self.hudDisplayed == NO) {
+                        self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+                        self.hudDisplayed = YES; // Set yes to make sure that HUD is not persistent (Issue #62)
+                        self.hud.mode = MBProgressHUDModeCustomView;
+                        NSString *localizedSegment = categoryLocalization[sponsorSegment.category] ?: sponsorSegment.category;
+                        NSString *localizedManualSkip = LOC(@"ManuallySkipReminder");
+                        NSString *formattedManualSkip = [NSString stringWithFormat:localizedManualSkip, localizedSegment, lroundf(sponsorSegment.startTime)/60, lroundf(sponsorSegment.startTime)%60, lroundf(sponsorSegment.endTime)/60, lroundf(sponsorSegment.endTime)%60];
+                        self.hud.label.text = formattedManualSkip;
+                        self.hud.label.numberOfLines = 0;
+                        [self.hud.button setTitle:LOC(@"Skip") forState:UIControlStateNormal];
+                        [self.hud.button addTarget:self action:@selector(manuallySkipSegment:) forControlEvents:UIControlEventTouchUpInside];
+                        // Add custom button to hide HUD
+                        UIButton *cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+                        UIImage *cancelImage = [[UIImage systemImageNamed:@"x.circle"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                        [cancelButton setImage:cancelImage forState:UIControlStateNormal];
+                        [cancelButton setTintColor:[[UIColor blackColor] colorWithAlphaComponent:0.7]];
+                        [cancelButton addTarget:self action:@selector(cancelHUD:) forControlEvents:UIControlEventTouchUpInside];
 
-                    UIView *buttonSuperview = self.hud.button.superview;
-                    [buttonSuperview addSubview:cancelButton];
+                        UIView *buttonSuperview = self.hud.button.superview;
+                        [buttonSuperview addSubview:cancelButton];
 
-                    CGFloat buttonSpacing = 10.0;
-                    cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
-                    [NSLayoutConstraint activateConstraints:@[
-                        [cancelButton.topAnchor constraintEqualToAnchor:self.hud.button.topAnchor],
-                        [cancelButton.leadingAnchor constraintEqualToAnchor:self.hud.button.trailingAnchor constant:buttonSpacing],
-                        [cancelButton.heightAnchor constraintEqualToAnchor:self.hud.button.heightAnchor]
-                    ]];
-                    self.hud.offset = CGPointMake(self.view.frame.size.width, -MBProgressMaxOffset);
+                        CGFloat buttonSpacing = 10.0;
+                        cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
+                        [NSLayoutConstraint activateConstraints:@[
+                            [cancelButton.topAnchor constraintEqualToAnchor:self.hud.button.topAnchor],
+                            [cancelButton.leadingAnchor constraintEqualToAnchor:self.hud.button.trailingAnchor constant:buttonSpacing],
+                            [cancelButton.heightAnchor constraintEqualToAnchor:self.hud.button.heightAnchor]
+                        ]];
+                        self.hud.offset = CGPointMake(self.view.frame.size.width, -MBProgressMaxOffset);
 
-                    // Use a delay equal to the length of the sponsored segment to avoid HUD call
-                    double delayInSeconds = sponsorSegment.endTime - sponsorSegment.startTime;
-                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                        [MBProgressHUD hideHUDForView:self.view animated:YES]; // Hide HUD if user is not interacting with buttons
-                        self.hudDisplayed = NO; // Reset flag to make it work for the next segment
-                    });
+                        double delayInSeconds = sponsorSegment.endTime - sponsorSegment.startTime;
+                        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                            [MBProgressHUD hideHUDForView:self.view animated:YES]; // Hide HUD if user is not interacting with buttons
+                            self.hudDisplayed = NO; // Reset flag to make it work for the next segment
+                        });
+                    }
                 }
-            }
-            //edge case where segment end time is longer than the video
-            else if (sponsorSegment.endTime > self.currentVideoTotalMediaTime) {
-                [self isb_scrubToTime:self.currentVideoTotalMediaTime];
-                if (kEnableSkipCountTracking) [SponsorBlockRequest viewedVideoSponsorTime:sponsorSegment];
-            }
-            else {
-                [self isb_scrubToTime:sponsorSegment.endTime];
-                if (kEnableSkipCountTracking) [SponsorBlockRequest viewedVideoSponsorTime:sponsorSegment];
-            }
-            if ([[kCategorySettings objectForKey:sponsorSegment.category] intValue] == 1) {
-                if (self.hud.superview != self.view && kShowSkipNotice) {
-                    [MBProgressHUD hideHUDForView:self.view animated:YES];
-                    self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
-                    self.hud.mode = MBProgressHUDModeCustomView;
-                    // Translate and add segment name to the skipped HUD (issue #70)
-                    NSString *localizedSegment = categoryLocalization[sponsorSegment.category] ?: sponsorSegment.category;
-                    self.hud.label.text = [NSString stringWithFormat:LOC(@"SkippedSegment"), localizedSegment];
-                    self.hud.label.numberOfLines = 0;
-                    [self.hud.button setTitle:LOC(@"Unskip") forState:UIControlStateNormal];
-                    [self.hud.button addTarget:self action:@selector(unskipSegment:) forControlEvents:UIControlEventTouchUpInside];
-                    self.hud.offset = CGPointMake(self.view.frame.size.width, -MBProgressMaxOffset);
-                    [self.hud hideAnimated:YES afterDelay:kSkipNoticeDuration];
+                //edge case where segment end time is longer than the video
+                else if (sponsorSegment.endTime > self.currentVideoTotalMediaTime) {
+                    [self isb_scrubToTime:self.currentVideoTotalMediaTime];
+                    if (kEnableSkipCountTracking) [SponsorBlockRequest viewedVideoSponsorTime:sponsorSegment];
+                }
+                else {
+                    [self isb_scrubToTime:sponsorSegment.endTime];
+                    if (kEnableSkipCountTracking) [SponsorBlockRequest viewedVideoSponsorTime:sponsorSegment];
+                }
+                if ([[kCategorySettings objectForKey:sponsorSegment.category] intValue] == 1) {
+                    if (self.hud.superview != self.view && kShowSkipNotice) {
+                        [MBProgressHUD hideHUDForView:self.view animated:YES];
+                        self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+                        self.hud.mode = MBProgressHUDModeCustomView;
+                        // Translate and add segment name to the skipped HUD (issue #70)
+                        NSString *localizedSegment = categoryLocalization[sponsorSegment.category] ?: sponsorSegment.category;
+                        self.hud.label.text = [NSString stringWithFormat:LOC(@"SkippedSegment"), localizedSegment];
+                        self.hud.label.numberOfLines = 0;
+                        [self.hud.button setTitle:LOC(@"Unskip") forState:UIControlStateNormal];
+                        [self.hud.button addTarget:self action:@selector(unskipSegment:) forControlEvents:UIControlEventTouchUpInside];
+                        self.hud.offset = CGPointMake(self.view.frame.size.width, -MBProgressMaxOffset);
+                        [self.hud hideAnimated:YES afterDelay:kSkipNoticeDuration];
 
-                    // Play sound effect if option enabled
-                    if (kSkipAudioNotification) {
-                        playSponsorAudio();
+                        // Play sound effect if option enabled
+                        if (kSkipAudioNotification) {
+                            playSponsorAudio();
+                        }
                     }
                 }
             }
-                                                                                                         
-            if (self.currentSponsorSegment <= self.skipSegments.count-1 && [[kCategorySettings objectForKey:sponsorSegment.category] intValue] != 3) self.currentSponsorSegment ++;
+            // Advance counter: poi_highlight always advances (even with ManualSkip setting),
+            // others advance only when not in ManualSkip mode.
+            if (self.currentSponsorSegment <= self.skipSegments.count-1
+                    && ([[kCategorySettings objectForKey:sponsorSegment.category] intValue] != 3
+                        || [sponsorSegment.category isEqualToString:@"poi_highlight"])) {
+                self.currentSponsorSegment++;
+            }
         }
         else if (lroundf(arg2.time) > sponsorSegment.startTime && self.currentSponsorSegment != self.skipSegments.count && self.currentSponsorSegment != self.skipSegments.count-1) {
             self.currentSponsorSegment ++;
@@ -216,6 +232,7 @@ void currentVideoTimeDidChange(YTPlayerViewController *self, YTSingleVideoTime *
 %property (strong, nonatomic) NSMutableArray *userSkipSegments;
 %property (strong, nonatomic) NSString *channelID;
 %property (nonatomic, assign) BOOL hudDisplayed;
+%property (strong, nonatomic) SponsorSegment *pendingPoiSegment;
 
 // used to keep support for older versions, as seekToTime is new
 %new(v@:d)
@@ -242,6 +259,7 @@ void currentVideoTimeDidChange(YTPlayerViewController *self, YTSingleVideoTime *
     if ([overlayView isKindOfClass:%c(YTMainAppVideoPlayerOverlayView)]) {
         [MBProgressHUD hideHUDForView:playerView animated:YES]; //fix manual skip popup not disappearing when changing videos
         self.hudDisplayed = NO;  // Reset flag when changing videos
+        self.pendingPoiSegment = nil; // Clear any pending poi highlight from previous video
 
         self.skipSegments = [NSMutableArray array];
         self.userSkipSegments = [NSMutableArray array];
@@ -274,6 +292,73 @@ void currentVideoTimeDidChange(YTPlayerViewController *self, YTSingleVideoTime *
 
     else {
         modifiedTimeString = nil;
+    }
+
+    // poi_highlight: handle at load time, mirroring the web extension's startSkipScheduleCheckingForStartSponsors.
+    // Find the highest-time highlight that is still ahead of the current playhead.
+    self.pendingPoiSegment = nil;
+    NSInteger poiSetting = [[kCategorySettings objectForKey:@"poi_highlight"] intValue];
+    if (poiSetting == 1 || poiSetting == 3) {
+        SponsorSegment *bestPoi = nil;
+        for (SponsorSegment *segment in arg1) {
+            if ([segment.category isEqualToString:@"poi_highlight"]) {
+                if (!bestPoi || segment.startTime > bestPoi.startTime)
+                    bestPoi = segment;
+            }
+        }
+        if (bestPoi) {
+            self.pendingPoiSegment = bestPoi;
+            SponsorSegment *poi = bestPoi;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                if (poi.startTime <= self.currentVideoMediaTime) return; // highlight already passed
+                if (poiSetting == 1) {
+                    // AutoSkip: jump straight to the highlight (web: setCurrentTime(skipTime[1]))
+                    [self isb_scrubToTime:poi.startTime];
+                    if (kEnableSkipCountTracking) [SponsorBlockRequest viewedVideoSponsorTime:poi];
+                    if (kShowSkipNotice) {
+                        [MBProgressHUD hideHUDForView:self.view animated:YES];
+                        self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+                        self.hud.mode = MBProgressHUDModeCustomView;
+                        NSString *localizedSegment = categoryLocalization[@"poi_highlight"] ?: @"poi_highlight";
+                        self.hud.label.text = [NSString stringWithFormat:LOC(@"SkippedSegment"), localizedSegment];
+                        self.hud.label.numberOfLines = 0;
+                        [self.hud.button setTitle:LOC(@"Unskip") forState:UIControlStateNormal];
+                        [self.hud.button addTarget:self action:@selector(unskipSegment:) forControlEvents:UIControlEventTouchUpInside];
+                        self.hud.offset = CGPointMake(self.view.frame.size.width, -MBProgressMaxOffset);
+                        [self.hud hideAnimated:YES afterDelay:kSkipNoticeDuration];
+                        if (kSkipAudioNotification) playSponsorAudio();
+                    }
+                } else {
+                    // ManualSkip: show persistent button (web: shows control-bar button)
+                    if (self.hud.superview == self.view || self.hudDisplayed) return;
+                    self.hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+                    self.hudDisplayed = YES;
+                    self.hud.mode = MBProgressHUDModeCustomView;
+                    NSString *localizedSegment = categoryLocalization[@"poi_highlight"] ?: @"poi_highlight";
+                    NSString *localizedManualSkip = LOC(@"ManuallySkipReminderPoi");
+                    self.hud.label.text = [NSString stringWithFormat:localizedManualSkip, localizedSegment, lroundf(poi.startTime)/60, lroundf(poi.startTime)%60];
+                    self.hud.label.numberOfLines = 0;
+                    [self.hud.button setTitle:LOC(@"Skip") forState:UIControlStateNormal];
+                    [self.hud.button addTarget:self action:@selector(skipToHighlight:) forControlEvents:UIControlEventTouchUpInside];
+                    UIButton *cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+                    UIImage *cancelImage = [[UIImage systemImageNamed:@"x.circle"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+                    [cancelButton setImage:cancelImage forState:UIControlStateNormal];
+                    [cancelButton setTintColor:[[UIColor labelColor] colorWithAlphaComponent:0.7]];
+                    [cancelButton addTarget:self action:@selector(cancelHUD:) forControlEvents:UIControlEventTouchUpInside];
+                    UIView *buttonSuperview = self.hud.button.superview;
+                    [buttonSuperview addSubview:cancelButton];
+                    CGFloat buttonSpacing = 10.0;
+                    cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
+                    [NSLayoutConstraint activateConstraints:@[
+                        [cancelButton.topAnchor constraintEqualToAnchor:self.hud.button.topAnchor],
+                        [cancelButton.leadingAnchor constraintEqualToAnchor:self.hud.button.trailingAnchor constant:buttonSpacing],
+                        [cancelButton.heightAnchor constraintEqualToAnchor:self.hud.button.heightAnchor]
+                    ]];
+                    self.hud.offset = CGPointMake(self.view.frame.size.width, -MBProgressMaxOffset);
+                    // No auto-dismiss — persists like the web control-bar button until user acts
+                }
+            });
+        }
     }
 }
 
@@ -343,6 +428,19 @@ void currentVideoTimeDidChange(YTPlayerViewController *self, YTSingleVideoTime *
 %new(v@:@)
 - (void)cancelHUD:(UIButton *)sender {
     [MBProgressHUD hideHUDForView:self.view animated:YES];
+    self.hudDisplayed = NO;
+}
+
+%new(v@:@)
+- (void)skipToHighlight:(UIButton *)sender {
+    if (!self.pendingPoiSegment) return;
+    SponsorSegment *poi = self.pendingPoiSegment;
+    self.pendingPoiSegment = nil;
+    [self isb_scrubToTime:poi.startTime];
+    if (kEnableSkipCountTracking) [SponsorBlockRequest viewedVideoSponsorTime:poi];
+    [MBProgressHUD hideHUDForView:self.view animated:YES];
+    self.hudDisplayed = NO;
+    if (kSkipAudioNotification) playSponsorAudio();
 }
 
 - (void)setPlayerViewLayout:(NSInteger)arg1 {
@@ -504,6 +602,9 @@ void currentVideoTimeDidChange(YTPlayerViewController *self, YTSingleVideoTime *
         CGFloat beginX = (startTime * self.frame.size.width) / self.totalTime;
         CGFloat endX = (endTime * self.frame.size.width) / self.totalTime;
         CGFloat markerWidth = MAX(endX - beginX, 0);
+        // poi_highlight is a single point (startTime == endTime): give it a fixed visible width
+        BOOL isPoi = [segment.category isEqualToString:@"poi_highlight"];
+        if (isPoi) { markerWidth = 3.0; beginX = MAX(0, beginX - 1.5); }
         
         UIColor *color;
         if ([segment.category isEqualToString:@"sponsor"]) color = colorWithHexString([kCategorySettings objectForKey:@"sponsorColor"]);
@@ -513,9 +614,13 @@ void currentVideoTimeDidChange(YTPlayerViewController *self, YTSingleVideoTime *
         else if ([segment.category isEqualToString:@"selfpromo"]) color = colorWithHexString([kCategorySettings objectForKey:@"selfpromoColor"]);
         else if ([segment.category isEqualToString:@"music_offtopic"]) color = colorWithHexString([kCategorySettings objectForKey:@"music_offtopicColor"]);
         else if ([segment.category isEqualToString:@"preview"]) color = colorWithHexString([kCategorySettings objectForKey:@"previewColor"]);
+        else if ([segment.category isEqualToString:@"hook"]) color = colorWithHexString([kCategorySettings objectForKey:@"hookColor"]);
+        else if ([segment.category isEqualToString:@"filler"]) color = colorWithHexString([kCategorySettings objectForKey:@"fillerColor"]);
+        else if ([segment.category isEqualToString:@"poi_highlight"]) color = colorWithHexString([kCategorySettings objectForKey:@"poi_highlightColor"]);
         UIView *newMarkerView = [[UIView alloc] initWithFrame:CGRectZero];
         newMarkerView.backgroundColor = color;
         [self addSubview:newMarkerView];
+        [self bringSubviewToFront:newMarkerView];
         newMarkerView.translatesAutoresizingMaskIntoConstraints = NO;
         if (isnan(markerWidth) || !isfinite(beginX)) {
             return;
@@ -590,6 +695,9 @@ static void setSkipSegments(YTModularPlayerBarView *self, NSMutableArray <Sponso
         CGFloat beginX = (startTime * self.frame.size.width) / totalTime;
         CGFloat endX = (endTime * self.frame.size.width) / totalTime;
         CGFloat markerWidth = MAX(endX - beginX, 0);
+        // poi_highlight is a single point (startTime == endTime): give it a fixed visible width
+        BOOL isPoi = [segment.category isEqualToString:@"poi_highlight"];
+        if (isPoi) { markerWidth = 3.0; beginX = MAX(0, beginX - 1.5); }
         
         UIColor *color;
         if ([segment.category isEqualToString:@"sponsor"]) color = colorWithHexString([kCategorySettings objectForKey:@"sponsorColor"]);
@@ -599,6 +707,9 @@ static void setSkipSegments(YTModularPlayerBarView *self, NSMutableArray <Sponso
         else if ([segment.category isEqualToString:@"selfpromo"]) color = colorWithHexString([kCategorySettings objectForKey:@"selfpromoColor"]);
         else if ([segment.category isEqualToString:@"music_offtopic"]) color = colorWithHexString([kCategorySettings objectForKey:@"music_offtopicColor"]);
         else if ([segment.category isEqualToString:@"preview"]) color = colorWithHexString([kCategorySettings objectForKey:@"previewColor"]);
+        else if ([segment.category isEqualToString:@"hook"]) color = colorWithHexString([kCategorySettings objectForKey:@"hookColor"]);
+        else if ([segment.category isEqualToString:@"filler"]) color = colorWithHexString([kCategorySettings objectForKey:@"fillerColor"]);
+        else if ([segment.category isEqualToString:@"poi_highlight"]) color = colorWithHexString([kCategorySettings objectForKey:@"poi_highlightColor"]);
 
         if (isnan(markerWidth) || !isfinite(beginX)) {
             return;
@@ -607,9 +718,12 @@ static void setSkipSegments(YTModularPlayerBarView *self, NSMutableArray <Sponso
         UIView *newMarkerView = [[UIView alloc] initWithFrame:CGRectMake(beginX, originY, markerWidth, referenceView.frame.size.height)];
         newMarkerView.userInteractionEnabled = NO;
         newMarkerView.backgroundColor = color;
-        [self insertSubview:newMarkerView belowSubview:scrubber];
+        // insertSubview:aboveSubview: keeps markers above the bar track but below the scrubber
+        [self insertSubview:newMarkerView aboveSubview:referenceView];
         [self.sponsorMarkerViews addObject:newMarkerView];
     }
+    // Keep the scrubber circle on top of all segment markers
+    if (scrubber) [self bringSubviewToFront:scrubber.superview ?: scrubber];
 }
 
 static void updateSkipSegments(YTInlinePlayerBarContainerView *self) {
@@ -879,6 +993,9 @@ AVQueuePlayer *queuePlayer;
         else if ([segment.category isEqualToString:@"selfpromo"]) markerView.backgroundColor = colorWithHexString([kCategorySettings objectForKey:@"selfpromoColor"]);
         else if ([segment.category isEqualToString:@"music_offtopic"]) markerView.backgroundColor = colorWithHexString([kCategorySettings objectForKey:@"music_offtopicColor"]);
         else if ([segment.category isEqualToString:@"preview"]) markerView.backgroundColor = colorWithHexString([kCategorySettings objectForKey:@"previewColor"]);
+        else if ([segment.category isEqualToString:@"hook"]) markerView.backgroundColor = colorWithHexString([kCategorySettings objectForKey:@"hookColor"]);
+        else if ([segment.category isEqualToString:@"filler"]) markerView.backgroundColor = colorWithHexString([kCategorySettings objectForKey:@"fillerColor"]);
+        else if ([segment.category isEqualToString:@"poi_highlight"]) markerView.backgroundColor = colorWithHexString([kCategorySettings objectForKey:@"poi_highlightColor"]);
         [scrubber addSubview:markerView];
         [self.markerViews addObject:markerView];
     }
@@ -1006,13 +1123,16 @@ AVQueuePlayer *queuePlayer;
 %group JustSettings
 %hook YTHeaderViewController
 %property (retain, nonatomic) YTQTMButton *sponsorBlockButton;
-- (id)initWithParentResponder:(id)arg {
+- (id)initWithParentResponder:(id)parentResponder {
     self = %orig;
-    UIImage *image = [UIImage imageWithContentsOfFile:[tweakBundle pathForResource:@"sponsorblocksettings-20@2x" ofType:@"png"]];
-    self.sponsorBlockButton = [%c(YTQTMButton) barButtonWithImage:[%c(YTUIResources) tintImage:image color:[%c(YTColor) white1]] accessibilityLabel:@"Sponsor Block" accessibilityIdentifier:@"sponsorBlockButton"];
-    [self.sponsorBlockButton addTarget:self action:@selector(sponsorBlockButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
-    YTRightNavigationButtons *rightButtons = [self valueForKey:@"_rightNavigationButtons"];
-    [rightButtons setButton:self.sponsorBlockButton forType:'ispb'];
+    if (self) {
+        UIImage *image = [UIImage imageWithContentsOfFile:[tweakBundle pathForResource:@"sponsorblocksettings-20@2x" ofType:@"png"]];
+        YTQTMButton *button = [%c(YTQTMButton) barButtonWithImage:[%c(YTUIResources) tintImage:image color:[%c(YTColor) white1]] accessibilityLabel:@"Sponsor Block" accessibilityIdentifier:@"sponsorBlockButton"];
+        [button addTarget:self action:@selector(sponsorBlockButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+        YTRightNavigationButtons *rightButtons = [self valueForKey:@"_rightNavigationButtons"];
+        [rightButtons setButton:button forType:'ispb'];
+        self.sponsorBlockButton = button;
+    }
     return self;
 }
 - (void)setRightButtons {
@@ -1031,15 +1151,14 @@ AVQueuePlayer *queuePlayer;
 static NSArray *filterButtons(YTRightNavigationButtons *self, BOOL visibleOnly) {
     NSMutableArray *buttons = [NSMutableArray array];
     NSMapTable <NSNumber *, YTQTMButton *> *buttonsTable = [self valueForKey:@"_buttons"];
-    for (NSNumber *key in buttonsTable) {
-        YTQTMButton *button = [buttonsTable objectForKey:key];
-        if (!visibleOnly || !button.hidden) {
-            if (key.intValue == 'ispb') {
-                if ([self valueForKey:@"_buttons"][key])
-                    [buttons insertObject:button atIndex:0];
-            } else
-                [buttons addObject:button];
-        }
+    NSUInteger isbIndex = 'ispb';
+    YTQTMButton *isbButton = [buttonsTable objectForKey:@(isbIndex)];
+    if (isbButton && (!visibleOnly || !isbButton.hidden))
+        [buttons addObject:isbButton];
+    for (NSUInteger i = 0; i < 7; ++i) {
+        YTQTMButton *button = [buttonsTable objectForKey:@(i)];
+        if (button && (!visibleOnly || !button.hidden))
+            [buttons addObject:button];
     }
     NSArray *dynamicButtons = [self valueForKey:@"_dynamicButtons"];
     for (YTQTMButton *button in dynamicButtons) {
@@ -1078,7 +1197,7 @@ static void loadPrefs() {
     // reset to official if user set to an empty string
     if ([kAPIInstance isEqualToString:@""]) kAPIInstance = @"https://sponsor.ajay.app/api";
 
-    kCategorySettings = [settings objectForKey:@"categorySettings"] ? [settings objectForKey:@"categorySettings"] : @{
+    NSDictionary *defaultCategorySettings = @{
         @"sponsor" : @1,
         @"sponsorColor" : hexFromUIColor(UIColor.greenColor),
         @"intro" : @0,
@@ -1092,8 +1211,20 @@ static void loadPrefs() {
         @"music_offtopic" : @0,
         @"music_offtopicColor" : hexFromUIColor(UIColor.orangeColor),
         @"preview": @0,
-        @"previewColor" : hexFromUIColor(UIColor.systemPurpleColor)
+        @"previewColor" : hexFromUIColor(UIColor.systemPurpleColor),
+        @"hook" : @0,
+        @"hookColor" : hexFromUIColor(UIColor.systemIndigoColor),
+        @"filler" : @0,
+        @"fillerColor" : hexFromUIColor(UIColor.systemBrownColor),
+        @"poi_highlight" : @0,
+        @"poi_highlightColor" : hexFromUIColor(UIColor.cyanColor)
     };
+    NSMutableDictionary *mergedCategorySettings = [defaultCategorySettings mutableCopy];
+    NSDictionary *savedCategorySettings = [settings objectForKey:@"categorySettings"];
+    if ([savedCategorySettings isKindOfClass:[NSDictionary class]]) {
+        [mergedCategorySettings addEntriesFromDictionary:savedCategorySettings];
+    }
+    kCategorySettings = [mergedCategorySettings copy];
     kMinimumDuration = [settings objectForKey:@"minimumDuration"] ? [[settings objectForKey:@"minimumDuration"] floatValue] : 0.0f;
     kShowSkipNotice = [settings objectForKey:@"showSkipNotice"] ? [[settings objectForKey:@"showSkipNotice"] boolValue] : YES;
     kShowButtonsInPlayer = [settings objectForKey:@"showButtonsInPlayer"] ? [[settings objectForKey:@"showButtonsInPlayer"] boolValue] : YES;
